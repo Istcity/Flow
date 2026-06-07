@@ -1,0 +1,135 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userOrgId() {
+      return userDoc().data.orgId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userDoc().data.role == 'admin';
+    }
+
+    function orderDoc(orderId) {
+      return get(/databases/$(database)/documents/orders/$(orderId));
+    }
+
+    function sameOrgAsOrder(orderId) {
+      return isSignedIn() && orderDoc(orderId).data.orgId == userOrgId();
+    }
+
+    function isAssignedToOrder(orderId) {
+      return isSignedIn() && sameOrgAsOrder(orderId) && (
+        isAdmin() ||
+        orderId in userDoc().data.get('assignedOrderIds', [])
+      );
+    }
+
+    match /organizations/{orgId} {
+      allow read: if isSignedIn() && userOrgId() == orgId;
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0;
+      allow update, delete: if isAdmin() && userOrgId() == orgId;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId ||
+        (isAdmin() && resource.data.orgId == userOrgId())
+      );
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.orgId is string
+        && request.resource.data.email is string
+        && (
+          (request.resource.data.role == 'admin'
+            && exists(/databases/$(database)/documents/organizations/$(request.resource.data.orgId))
+            && get(/databases/$(database)/documents/organizations/$(request.resource.data.orgId)).data.createdBy == request.auth.uid)
+          || request.resource.data.role in ['workshop', 'tracker']
+        );
+      allow update: if isAdmin() && resource.data.orgId == userOrgId()
+        || (isSignedIn() && request.auth.uid == userId
+            && !request.resource.data.diff(resource.data).changedKeys().hasAny(['role', 'orgId']));
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAssignedToOrder(orderId);
+      allow create: if isAdmin()
+        && request.resource.data.orgId == userOrgId();
+      allow update: if isAdmin() && resource.data.orgId == userOrgId()
+        || (isAssignedToOrder(orderId)
+            && !request.resource.data.diff(resource.data).changedKeys()
+              .hasAny(['orderName', 'workshopName', 'startDate', 'responsiblePersonName', 'targetQuantity', 'dailyQuantityTarget', 'expectedDeliveryDate', 'orgId']));
+      allow delete: if isAdmin() && resource.data.orgId == userOrgId();
+
+      match /productionEntries/{entryId} {
+        allow read: if isAssignedToOrder(orderId);
+        allow create: if isAssignedToOrder(orderId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.quantity is int
+          && request.resource.data.quantity > 0
+          && request.resource.data.operationType in ['Kesim', 'Dikim', 'Ütü', 'Paket'];
+        allow update, delete: if isAdmin() && sameOrgAsOrder(orderId)
+          || (isAssignedToOrder(orderId)
+              && resource.data.userId == request.auth.uid
+              && request.time < resource.data.createdAt + duration.value(10, 'm'));
+      }
+    }
+
+    function authEmailLower() {
+      return request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : '';
+    }
+
+    match /orderAssignments/{assignmentId} {
+      allow read: if isSignedIn() && (
+        (isAdmin() && resource.data.orgId == userOrgId()) ||
+        (authEmailLower() != '' && resource.data.email == authEmailLower())
+      );
+      allow create: if isAdmin()
+        && request.resource.data.orgId == userOrgId();
+      allow update: if isAdmin() && resource.data.orgId == userOrgId()
+        || (isSignedIn() && authEmailLower() != '' && resource.data.email == authEmailLower());
+    }
+
+    match /savedContacts/{contactId} {
+      allow read: if isAdmin() && resource.data.orgId == userOrgId();
+      allow create: if isAdmin() && request.resource.data.orgId == userOrgId();
+      allow update, delete: if isAdmin() && resource.data.orgId == userOrgId();
+    }
+
+    match /contactGroups/{groupId} {
+      allow read: if isAdmin() && resource.data.orgId == userOrgId();
+      allow create: if isAdmin() && request.resource.data.orgId == userOrgId();
+      allow update, delete: if isAdmin() && resource.data.orgId == userOrgId();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    match /productionAlerts/{alertId} {
+      allow read: if isSignedIn() && resource.data.orgId == userOrgId() && (
+        isAdmin() ||
+        resource.data.orderId in userDoc().data.get('assignedOrderIds', [])
+      );
+      allow create, update: if isSignedIn()
+        && request.resource.data.orgId == userOrgId()
+        && isAssignedToOrder(request.resource.data.orderId);
+      allow delete: if isAdmin() && resource.data.orgId == userOrgId();
+    }
+  }
+}

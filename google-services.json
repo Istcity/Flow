@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "626955387756",
+    "project_id": "flow-e5f5a",
+    "storage_bucket": "flow-e5f5a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626955387756:android:8fd191584a62f007eb2949",
+        "android_client_info": {
+          "package_name": "com.sinannergiz.flow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "626955387756-1e8rj5mjn24oco6uh1n8a161kbf2n5ka.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNx6XfWoBokMmzy7-bLfofrK5prhJcLTw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "626955387756-1e8rj5mjn24oco6uh1n8a161kbf2n5ka.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "626955387756-bvri1719f5b2aco8ciuv9sbtk0cks14b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sinannergiz.flow"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

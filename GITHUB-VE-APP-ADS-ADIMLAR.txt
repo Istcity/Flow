@@ -1,0 +1,143 @@
+FLOW — GitHub Push ve app-ads.txt Kurulum Adımları
+====================================================
+
+Bu dosya GitHub'a yükleme ve Google AdMob app-ads.txt doğrulaması için
+tüm adımları içerir.
+
+
+BÖLÜM 1 — app-ads.txt NEDİR?
+-----------------------------
+Google AdMob, uygulamanızın reklam gelirini doğrulamak için geliştirici
+web sitenizde şu dosyayı arar:
+
+  https://SİTENİZ.com/app-ads.txt
+
+FLOW projesinde dosya hazır:
+
+  app-ads.txt  (proje kökünde)
+
+İçeriği:
+  google.com, pub-8420759480841389, DIRECT, f08c47fec0942fa0
+
+
+BÖLÜM 2 — GITHUB'A İLK PUSH
+---------------------------
+
+Adım 1 — GitHub'da boş repo oluşturun
+  • https://github.com/new adresine gidin
+  • Repository name: flow  (veya istediğiniz ad)
+  • Public veya Private seçin
+  • README, .gitignore EKLEMEYİN (zaten projede var)
+  • "Create repository" tıklayın
+
+Adım 2 — Terminalde proje klasörüne gidin
+  cd ~/Projects/flow
+
+Adım 3 — İlk commit (henüz yapılmadıysa)
+  git add .
+  git status
+  # .env dosyası listede OLMAMALI (.gitignore'da)
+
+  git commit -m "$(cat <<'EOF'
+Initial commit: FLOW üretim takip uygulaması.
+
+Expo + Firebase + AdMob entegrasyonu, app-ads.txt dahil.
+EOF
+)"
+
+Adım 4 — GitHub remote ekleyin (KULLANICI_ADI ve REPO_ADI'nı değiştirin)
+  git remote add origin https://github.com/KULLANICI_ADI/flow.git
+
+Adım 5 — Push
+  git branch -M main
+  git push -u origin main
+
+  SSH kullanıyorsanız:
+  git remote add origin git@github.com:KULLANICI_ADI/flow.git
+  git push -u origin main
+
+
+BÖLÜM 3 — app-ads.txt'Yİ İNTERNETE KOYMA (GitHub Pages)
+-------------------------------------------------------
+
+AdMob, App Store / Play Store'da yazdığınız "Geliştirici web sitesi"
+adresinde app-ads.txt arar. GitHub Pages ile ücretsiz yayınlayabilirsiniz.
+
+Seçenek A — Kullanıcı GitHub Pages (önerilen, basit)
+  1. GitHub'da YENİ repo: KULLANICI_ADI.github.io  (tam bu isim!)
+  2. O repoya SADECE app-ads.txt koyun (veya FLOW'dan kopyalayın)
+  3. Settings → Pages → Source: main branch → Save
+  4. Birkaç dakika sonra erişin:
+     https://KULLANICI_ADI.github.io/app-ads.txt
+  5. Tarayıcıda açılınca şu satırı görmelisiniz:
+     google.com, pub-8420759480841389, DIRECT, f08c47fec0942fa0
+
+Seçenek B — FLOW reposunda docs/ ile (project pages)
+  1. FLOW repo → Settings → Pages
+  2. Branch: main, folder: / (root)
+  3. app-ads.txt proje kökünde olduğu için:
+     https://KULLANICI_ADI.github.io/flow/app-ads.txt
+     (repo adı flow ise — AdMob bazen kök domain ister, Seçenek A daha güvenli)
+
+Seçenek C — Kendi domaininiz
+  1. app-ads.txt dosyasını web sunucunuzun köküne yükleyin
+  2. https://domaininiz.com/app-ads.txt erişilebilir olmalı
+
+
+BÖLÜM 4 — ADMOB / MAĞAZA AYARLARI
+---------------------------------
+
+AdMob Console (https://apps.admob.com):
+  • Uygulama → Uygulama ayarları
+  • app-ads.txt bölümünde "Tara" / "Scan" — URL'nizi girin
+  • Durum "Onaylandı" olana kadar 24–72 saat bekleyin
+
+App Store Connect (iOS):
+  • Uygulama → App Information
+  • Developer Website: GitHub Pages URL'niz
+    örn. https://KULLANICI_ADI.github.io
+
+Google Play Console (Android):
+  • Store presence → Store listing
+  • Website: aynı URL
+
+
+BÖLÜM 5 — ADMOB KİMLİKLERİ (FLOW projesinde kayıtlı)
+----------------------------------------------------
+
+Uygulama ID:     ca-app-pub-8420759480841389~8354224627
+Banner:          ca-app-pub-8420759480841389/2088199178
+Interstitial:    ca-app-pub-8420759480841389/9775117500
+Publisher (ads): pub-8420759480841389
+
+Dosyalar: app.config.js, src/constants/ads.ts
+
+
+BÖLÜM 6 — YENİ BUILD (TestFlight)
+---------------------------------
+
+Kod push sonrası iOS build:
+  cd ~/Projects/flow
+  npm run ios:prepare
+  npm run ios:xcode
+  Product → Archive → TestFlight
+
+
+BÖLÜM 7 — SONRAKI GÜNCELLEMELER İÇİN PUSH
+-----------------------------------------
+
+  cd ~/Projects/flow
+  git add .
+  git status
+  git commit -m "Değişiklik açıklaması"
+  git push
+
+
+KONTROL LİSTESİ
+---------------
+[ ] GitHub repo oluşturuldu
+[ ] git push tamamlandı
+[ ] app-ads.txt web'de açılıyor (tarayıcı test)
+[ ] App Store / Play'de developer website güncellendi
+[ ] AdMob app-ads.txt taraması yapıldı
+[ ] TestFlight build 1.0.4 (5) veya üzeri yüklendi
